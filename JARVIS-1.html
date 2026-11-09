@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#030712">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<title>JARVIS</title>
+<style>
+:root{--c:#3de0ff;--b:#1580ff;--p:#b44cff;--bg:#030712;--pn:#0a1330;--t:#e8f8ff;--m:#8fc4e6}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:radial-gradient(ellipse at 50% 0,#0f2858,#050a1c 50%,#02040b);color:var(--t);font-family:system-ui,Arial,sans-serif;min-height:100%}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.wrap{max-width:720px;margin:auto;padding:10px 14px 28px}
+header{display:flex;justify-content:space-between;align-items:center}
+h1{margin:0;font-size:30px;letter-spacing:6px;color:#9aeeff;text-shadow:0 0 14px var(--b)}
+h1 small{display:block;font-size:11px;letter-spacing:3px;color:var(--p);text-shadow:none}
+.ib{background:none;border:1px solid #2a6fd0;color:var(--c);border-radius:10px;font-size:20px;width:44px;height:44px}
+.core{position:relative;width:220px;height:220px;margin:14px auto 6px}
+.ring{position:absolute;inset:0;border-radius:50%;border:2px dashed var(--c);opacity:.55;animation:spin 18s linear infinite}
+.ring.r2{inset:16px;border:2px solid var(--b);border-top-color:transparent;border-bottom-color:transparent;animation-duration:7s;animation-direction:reverse;opacity:.9}
+.ring.r3{inset:36px;border:1px solid var(--p);animation-duration:26s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.orb{position:absolute;inset:56px;border-radius:50%;border:0;color:#fff;font-size:44px;background:radial-gradient(circle,#4be8ff 0,#1a6fe0 45%,#0a1d46 80%);box-shadow:0 0 30px var(--b),0 0 60px #7a2cff66;cursor:pointer}
+.core.listen .orb{background:radial-gradient(circle,#ff9bf0,#b44cff 50%,#2a0f55);box-shadow:0 0 40px var(--p);animation:pulse 1s infinite}
+.core.think .ring.r2{animation-duration:1.2s}
+.core.speak .orb{animation:pulse .6s infinite}
+@keyframes pulse{50%{transform:scale(1.09)}}
+@media(prefers-reduced-motion:reduce){.ring,.orb{animation:none!important}}
+#state{text-align:center;color:var(--m);min-height:22px;font-size:14px}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.chip{border:1px solid #2a6fd0;background:#0a1634;color:var(--t);border-radius:20px;padding:9px 14px;font-size:14px}
+.chip.on{background:linear-gradient(90deg,#1580ff,#8a3dff);border-color:transparent}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:12px 0}
+.app{border:1px solid #236bd0;border-radius:14px;background:linear-gradient(150deg,#0e1f45,#090d20);color:var(--t);padding:12px 2px;font-size:12px}
+.app span{display:block;font-size:26px;margin-bottom:4px}
+#cam{display:none;border:1px solid var(--c);border-radius:16px;padding:10px;background:#050c1f;margin:12px 0}
+#cam video{width:100%;max-height:300px;border-radius:10px;background:#000;object-fit:cover}
+.chat{border:1px solid #4a5cff;border-radius:16px;background:#070e24;padding:12px}
+#log{max-height:300px;overflow:auto;font-size:15px;line-height:1.5}
+.msg{padding:9px 11px;border-radius:10px;margin:7px 0;background:#10204a;white-space:pre-wrap;word-wrap:break-word}
+.msg.u{border-left:3px solid var(--p)}.msg.j{border-left:3px solid var(--c)}.msg.s{color:var(--m);font-size:13px}
+.msg img{display:block;max-width:140px;border-radius:8px;margin-bottom:6px}
+form{display:flex;gap:8px;margin-top:10px}
+input,select{background:#040918;border:1px solid #345f9f;color:#fff;border-radius:10px;padding:12px;font-size:16px;width:100%}
+form input{flex:1;min-width:0}
+.go{border:0;border-radius:10px;background:linear-gradient(90deg,#1580ff,#8a3dff);color:#fff;padding:0 18px;font-weight:700}
+#set{display:none;position:fixed;inset:0;background:#000c;z-index:9;overflow:auto;padding:16px}
+#set .box{max-width:520px;margin:auto;background:#09132e;border:1px solid var(--c);border-radius:16px;padding:16px}
+label{display:block;margin:12px 0 4px;color:var(--m);font-size:14px}
+.help{font-size:13px;color:var(--m);line-height:1.5}
+a{color:var(--c)}
+@media(max-width:380px){.grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>JARVIS<small>FRIDAY EDITION</small></h1><button class="ib" id="setBtn" aria-label="Settings">⚙</button></header>
+
+<div class="core" id="core"><div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div><button class="orb" id="mic" aria-label="Tap to speak">🎙</button></div>
+<div id="state">Tap the orb and speak</div>
+
+<div class="row">
+<button class="chip" id="lang">தமிழ்</button>
+<button class="chip" id="convo">Hands-free: off</button>
+<button class="chip" id="camBtn">📷 Camera</button>
+<button class="chip" id="stop">■ Stop voice</button>
+</div>
+
+<div id="cam">
+<video id="vid" autoplay playsinline muted></video>
+<div class="row"><button class="chip" id="snap">Look and explain</button><button class="chip" id="flip">Flip camera</button><button class="chip" id="up">From gallery</button><button class="chip" id="camOff">Close</button></div>
+<input type="file" id="file" accept="image/*" capture="environment" hidden>
+<div class="help">While the camera is open, anything you say or type is asked about what the camera sees.</div>
+</div>
+
+<div class="grid" id="apps"></div>
+
+<div class="chat">
+<div id="log"></div>
+<form id="f"><input id="t" type="text" placeholder="Message JARVIS…" autocomplete="off"><button class="go">Send</button></form>
+</div>
+</div>
+
+<div id="set"><div class="box">
+<h2 style="margin-top:0;color:var(--c)">Settings</h2>
+<label>Gemini API key (free)</label>
+<input id="key" type="password" placeholder="Paste key here" autocomplete="off">
+<div class="help">Get it free at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a>. It is stored only on this phone.</div>
+<label>AI model</label>
+<input id="model" type="text">
+<label>Voice speed</label>
+<select id="rate"><option value="0.85">Slow</option><option value="1">Normal</option><option value="1.15">Fast</option></select>
+<label>Speak replies aloud</label>
+<select id="speakOn"><option value="1">Yes</option><option value="0">No</option></select>
+<div class="row"><button class="go" style="height:44px" id="save">Save</button><button class="chip" id="close">Cancel</button><button class="chip" id="clear">Clear chat</button></div>
+</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const ls={get:(k,d)=>{try{return localStorage.getItem(k)??d}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+let lang=ls.get('lang','ta'),convo=false,history=[],busy=false,rec=null,stream=null,facing='environment',tamilWarned=false;
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+
+/* ---------- UI helpers ---------- */
+function setState(s,txt){const c=$('core');c.className='core '+s;$('state').textContent=txt||''}
+function add(text,cls,img){const d=document.createElement('div');d.className='msg '+cls;if(img){const i=document.createElement('img');i.src=img;d.appendChild(i)}d.appendChild(document.createTextNode(text));$('log').appendChild(d);$('log').scrollTop=1e9;return d}
+function paintLang(){$('lang').textContent=lang==='ta'?'தமிழ்':'English';$('lang').classList.add('on')}
+paintLang();
+$('lang').onclick=()=>{lang=lang==='ta'?'en':'ta';ls.set('lang',lang);paintLang();say(lang==='ta'?'தமிழ் தேர்ந்தெடுக்கப்பட்டது':'English selected')};
+$('convo').onclick=()=>{convo=!convo;$('convo').textContent='Hands-free: '+(convo?'on':'off');$('convo').classList.toggle('on',convo);if(convo)listen()};
+$('stop').onclick=()=>{convo=false;$('convo').textContent='Hands-free: off';$('convo').classList.remove('on');speechSynthesis.cancel();try{rec&&rec.abort()}catch(e){}setState('','Stopped')};
+
+/* ---------- Voice output ---------- */
+const isTamil=s=>/[\u0B80-\u0BFF]/.test(s);
+function clean(s){return s.replace(/```[\s\S]*?```/g,' ').replace(/https?:\/\/\S+/g,' ').replace(/[*_#`>~|]/g,'').replace(/\s+/g,' ').trim()}
+function pickVoice(l){const v=speechSynthesis.getVoices();return v.find(x=>x.lang.replace('_','-')===l)||v.find(x=>x.lang.toLowerCase().startsWith(l.slice(0,2)))}
+function say(text){
+ return new Promise(res=>{
+  if($('speakOn').value==='0'||!('speechSynthesis' in window)){res();return}
+  speechSynthesis.cancel();
+  const t=clean(text);if(!t){res();return}
+  const l=isTamil(t)?'ta-IN':'en-IN';
+  const v=pickVoice(l);
+  if(l==='ta-IN'&&!v&&!tamilWarned){tamilWarned=true;add('Tamil voice not found on this phone. Install "Speech Services by Google" and download the Tamil voice (see the guide).','s')}
+  const parts=t.match(/[^.!?।]+[.!?।]*/g)||[t];
+  parts.forEach((p,i)=>{
+   const u=new SpeechSynthesisUtterance(p.trim());u.lang=l;if(v)u.voice=v;u.rate=parseFloat($('rate').value);
+   if(i===0)u.onstart=()=>setState('speak','Speaking…');
+   if(i===parts.length-1){u.onend=()=>{setState('','');res()};u.onerror=()=>{setState('','');res()}}
+   speechSynthesis.speak(u);
+  });
+ });
+}
+if('speechSynthesis' in window)speechSynthesis.onvoiceschanged=()=>{};
+
+/* ---------- Voice input ---------- */
+function listen(){
+ if(!SR){add('Voice input is not supported here. Open this file in Chrome, or type instead.','s');return}
+ if(busy)return;
+ speechSynthesis.cancel();try{rec&&rec.abort()}catch(e){}
+ rec=new SR();rec.lang=lang==='ta'?'ta-IN':'en-IN';rec.interimResults=false;rec.maxAlternatives=1;
+ let got=false;
+ rec.onstart=()=>setState('listen','Listening…');
+ rec.onresult=e=>{got=true;send(e.results[0][0].transcript)};
+ rec.onerror=e=>{const m={'not-allowed':'Microphone blocked. Allow it in Chrome site settings.','no-speech':'I did not hear anything.','network':'Voice needs internet.'};setState('',m[e.error]||'Voice error: '+e.error);if(e.error==='not-allowed'||e.error==='network')convo=false};
+ rec.onend=()=>{if(!got&&!busy){if($('core').className.includes('listen'))setState('','');if(convo&&!speechSynthesis.speaking)setTimeout(listen,500)}};
+ try{rec.start()}catch(e){}
+}
+$('mic').onclick=()=>{$('core').classList.contains('listen')?(rec&&rec.abort()):listen()};
+
+/* ---------- App shortcuts ---------- */
+const I=(pkg)=>`intent://#Intent;package=${pkg};end`;
+let apps=[
+ {n:'WhatsApp',i:'💬',u:I('com.whatsapp'),k:['whatsapp','வாட்ஸ்அப்','வாட்சப்']},
+ {n:'YouTube',i:'▶️',u:I('com.google.android.youtube'),k:['youtube','யூடியூப்']},
+ {n:'Chrome',i:'🌐',u:I('com.android.chrome'),k:['chrome','குரோம்']},
+ {n:'Maps',i:'🗺',u:I('com.google.android.apps.maps'),k:['maps','மேப்ஸ்','map']},
+ {n:'Gmail',i:'✉️',u:I('com.google.android.gm'),k:['gmail','ஜிமெயில்','mail']},
+ {n:'Phone',i:'📞',u:'tel:',k:['phone','dialer','டயலர்','போன்']},
+ {n:'Camera',i:'📸',u:'intent:#Intent;action=android.media.action.IMAGE_CAPTURE;end',k:['camera app','கேமரா']},
+ {n:'Settings',i:'⚙️',u:'intent:#Intent;action=android.settings.SETTINGS;end',k:['settings','செட்டிங்ஸ்']},
+ {n:'Photos',i:'🖼',u:I('com.google.android.apps.photos'),k:['photos','gallery','கேலரி']},
+ {n:'Play Store',i:'🛍',u:I('com.android.vending'),k:['play store','பிளே ஸ்டோர்']},
+ {n:'Instagram',i:'📷',u:I('com.instagram.android'),k:['instagram','இன்ஸ்டாகிராம்']},
+ {n:'Telegram',i:'✈️',u:I('org.telegram.messenger'),k:['telegram','டெலிகிராம்']},
+];
+try{apps=apps.concat(JSON.parse(ls.get('custom','[]')))}catch(e){}
+function drawApps(){const g=$('apps');g.innerHTML='';apps.forEach(a=>{const b=document.createElement('button');b.className='app';b.innerHTML='<span>'+a.i+'</span>';b.appendChild(document.createTextNode(a.n));b.onclick=()=>openApp(a);g.appendChild(b)});
+ const p=document.createElement('button');p.className='app';p.innerHTML='<span>＋</span>Add link';p.onclick=addLink;g.appendChild(p)}
+function openApp(a){add('Opening '+a.n+'…','s');setTimeout(()=>{location.href=a.u},150)}
+function addLink(){const n=prompt('Name (example: Facebook)');if(!n)return;const u=prompt('Web link (example: https://facebook.com)');if(!u)return;
+ let c=[];try{c=JSON.parse(ls.get('custom','[]'))}catch(e){}
+ const a={n,i:'🔗',u:u.startsWith('http')?u:'https://'+u,k:[n.toLowerCase()],custom:1};c.push(a);ls.set('custom',JSON.stringify(c));apps.push(a);drawApps()}
+drawApps();
+
+/* ---------- Local voice commands ---------- */
+function command(text){
+ const t=text.toLowerCase().trim();
+ let m;
+ if((m=t.match(/(?:play|பிளே)\s+(.+?)(?:\s+(?:on|in)\s+youtube)?$/))&&/youtube|யூடியூப்|play /.test(t)&&!/^play$/.test(m[1])){const q=m[1];return act('Playing "'+q+'" on YouTube','https://www.youtube.com/results?search_query='+encodeURIComponent(q))}
+ if((m=t.match(/^(?:search(?: for)?|google|தேடு)\s+(.+)/))||(m=t.match(/^(.+?)\s+(?:தேடு|தேடுங்கள்)$/)))return act('Searching "'+m[1]+'"','https://www.google.com/search?q='+encodeURIComponent(m[1]));
+ if((m=t.match(/(?:navigate|directions?|take me) to\s+(.+)/))||(m=t.match(/^(.+?)\s+(?:செல்ல வழி|வழி காட்டு)$/)))return act('Directions to '+m[1],'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(m[1]));
+ if((m=t.match(/(?:call|dial)\s+([\d\s+]{5,})/)))return act('Calling '+m[1].trim(),'tel:'+m[1].replace(/\s/g,''));
+ if(/^(?:open|launch|start)\b|திற|ஓபன்|தொடங்கு/.test(t)){
+  const a=apps.find(a=>a.k.some(k=>t.includes(k)));
+  if(a){openApp(a);return 'Opening '+a.n+'.'}
+ }
+ if(/^(?:take a photo|look at this|what do you see|what is this|என்ன தெரிகிறது|இது என்ன)/.test(t)){if(!stream){openCam();return 'Camera on. Ask me again.'}return null}
+ return null;
+}
+function act(msg,url){setTimeout(()=>{location.href=url},400);return msg+'.'}
+
+/* ---------- AI ---------- */
+const SYS=()=>`You are JARVIS, a loyal, witty, concise personal AI assistant like Tony Stark's, running in a phone web app. Address the user as "Boss" occasionally. Reply in the same language the user used: Tamil in Tamil script, English in English, or mixed if they mix. Replies are read aloud, so keep them short (1 to 4 sentences) and avoid markdown, lists, emojis and URLs unless asked for detail. When an image is provided, describe or answer about it directly. You cannot control the phone directly; the app handles opening apps, calls, searches and directions itself. Current local date and time: ${new Date().toString()}.`;
+async function ai(text,img){
+ const key=ls.get('key','');
+ if(!key){$('set').style.display='block';throw new Error('Add your free Gemini API key in Settings first.')}
+ const parts=[{text}];if(img)parts.push({inlineData:{mimeType:'image/jpeg',data:img.split(',')[1]}});
+ const body={systemInstruction:{parts:[{text:SYS()}]},contents:[...history.map(h=>({role:h.r,parts:[{text:h.t}]})),{role:'user',parts}],generationConfig:{maxOutputTokens:2048,temperature:0.8}};
+ const model=ls.get('model','gemini-flash-latest');
+ const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify(body)});
+ const d=await r.json().catch(()=>({}));
+ if(!r.ok){const m=(d.error&&d.error.message)||('Error '+r.status);
+  if(r.status===429)throw new Error('Free limit reached. Wait a minute and try again.');
+  if(r.status===400&&/key/i.test(m))throw new Error('API key is not valid. Check it in Settings.');
+  if(r.status===404)throw new Error('Model name not found. Open Settings and type gemini-flash-latest.');
+  throw new Error(m)}
+ const out=(((d.candidates||[])[0]||{}).content||{parts:[]}).parts.map(p=>p.text||'').join('').trim();
+ if(!out)throw new Error('No answer came back. Try rephrasing.');
+ history.push({r:'user',t:img?text+' [photo attached]':text},{r:'model',t:out});history=history.slice(-20);
+ return out;
+}
+
+/* ---------- Main send ---------- */
+async function send(text,imgOverride){
+ text=(text||'').trim();if(!text&&!imgOverride)return;
+ if(busy)return;
+ $('t').value='';
+ let img=imgOverride||null;
+ if(!img&&stream)img=frame();
+ if(!text)text=lang==='ta'?'இதில் என்ன இருக்கிறது என்று விளக்கு.':'Describe what you see.';
+ add(text,'u',img);
+ if(!img){const c=command(text);if(c){add(c,'j');await say(c);if(convo)listen();return}}
+ busy=true;setState('think','Thinking…');
+ try{const a=await ai(text,img);add(a,'j');busy=false;await say(a)}
+ catch(e){busy=false;add(e.message||String(e),'s');setState('','');say(lang==='ta'?'மன்னிக்கவும், ஒரு பிழை ஏற்பட்டது.':'Sorry, something went wrong.');convo=false;$('convo').textContent='Hands-free: off';$('convo').classList.remove('on');return}
+ busy=false;
+ if(convo)listen();
+}
+$('f').onsubmit=e=>{e.preventDefault();send($('t').value)};
+
+/* ---------- Camera ---------- */
+async function openCam(){
+ $('cam').style.display='block';
+ try{
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing},audio:false});
+  $('vid').srcObject=stream;$('camBtn').classList.add('on');
+ }catch(e){stream=null;add('Camera unavailable ('+(e.name||'error')+'). Allow camera access, or use "From gallery".','s')}
+}
+function closeCam(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$('cam').style.display='none';$('camBtn').classList.remove('on')}
+function frame(){const v=$('vid');if(!v.videoWidth)return null;const s=Math.min(1,1024/v.videoWidth),c=document.createElement('canvas');c.width=v.videoWidth*s;c.height=v.videoHeight*s;c.getContext('2d').drawImage(v,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.8)}
+$('camBtn').onclick=()=>stream?closeCam():openCam();
+$('camOff').onclick=closeCam;
+$('flip').onclick=()=>{facing=facing==='environment'?'user':'environment';openCam()};
+$('snap').onclick=()=>send($('t').value||'');
+$('up').onclick=()=>$('file').click();
+$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,1024/im.width),c=document.createElement('canvas');c.width=im.width*s;c.height=im.height*s;c.getContext('2d').drawImage(im,0,0,c.width,c.height);send($('t').value||'',c.toDataURL('image/jpeg',.8))};im.src=r.result};r.readAsDataURL(f);e.target.value=''};
+
+/* ---------- Settings ---------- */
+$('key').value=ls.get('key','');$('model').value=ls.get('model','gemini-flash-latest');$('rate').value=ls.get('rate','1');$('speakOn').value=ls.get('speakOn','1');
+$('setBtn').onclick=()=>$('set').style.display='block';
+$('close').onclick=()=>$('set').style.display='none';
+$('save').onclick=()=>{ls.set('key',$('key').value.trim());ls.set('model',$('model').value.trim()||'gemini-flash-latest');ls.set('rate',$('rate').value);ls.set('speakOn',$('speakOn').value);$('set').style.display='none';add('Settings saved.','s')};
+$('clear').onclick=()=>{history=[];$('log').innerHTML='';$('set').style.display='none'};
+
+add(ls.get('key','')?'Online and ready, Boss. Tap the orb and speak, or type.':'Hello Boss. First, tap ⚙ and paste your free Gemini API key so I can think.','j');
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+</body>
+</html>
